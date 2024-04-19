@@ -170,8 +170,8 @@ box_temp.update_layout(**custom_template)
 box_temp.update_traces(line=dict(color='black', width=0.5))
 # Add annotations for max and min temperatures
 for city in temp_monthly['city'].unique():
-    max_temp = temp_monthly[temp_monthly['city'] == city]['avg_temp_c'].max()
-    min_temp = temp_monthly[temp_monthly['city'] == city]['avg_temp_c'].min()
+    max_temp = temp_monthly[temp_monthly['city'] == city]['max_temp_c'].max()
+    min_temp = temp_monthly[temp_monthly['city'] == city]['min_temp_c'].min()
     box_temp.add_annotation(x=city, y=max_temp, text=f"Max: {max_temp}°C", showarrow=True, font=dict(color='black'))
     box_temp.add_annotation(x=city, y=min_temp, text=f"Min: {min_temp}°C", showarrow=True, font=dict(color='black'))
 box_temp.update_layout(showlegend=False)
