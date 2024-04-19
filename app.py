@@ -6,6 +6,7 @@ import plotly.express as px
 from dash import dash_table
 import dash_bootstrap_components as dbc
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 # Define your custom CSS styles
 custom_css = '''
@@ -42,11 +43,11 @@ custom_template = {
 
 # custom color mappings
 custom_colors = {
-    'Auckland': '#C3BA27',
-    'Biarritz': '#929292',
-    'Berlin': '#FDA929',
-    'Reykjavik': '#A9C7FC',
-    'Vancouver': '#F0CBFD'
+    'Auckland': '#C6082C', #C3BA27
+    'Biarritz': '#C3921E', #929292
+    'Berlin': '#230A2A', #FDA929
+    'Reykjavik': '#8D2013', #A9C7FC
+    'Vancouver': '#013C40' #F0CBFD
 }
 
 # custom_black
@@ -67,24 +68,24 @@ season_colors = {
 }
 
 
-#table 
+#TABLE ----------------------------------- 
 df_locations = pd.read_csv('./data/staging_location.csv')
 population = [3677472, 25764, 706012, 136894, 1695200]
 df_locations['population'] = population
 table = dash_table.DataTable(df_locations.to_dict('records'),
                                   [{"name": i, "id": i} for i in df_locations.columns],
-                               style_data={'font-family': "Helvetica", 'color': 'white','backgroundColor': "", 'font-size':'12px'},
+                               style_data={'font-family': "Helvetica", 'color': 'black','backgroundColor': "", 'font-size':'12px'},
                               style_header={'font-family': "Helvetica",'font-size':'12px',
                                   'backgroundColor': 'rgb(210, 210, 210)',
                                   'color': 'black','fontWeight': 'bold'}, 
                                      style_table={ 
                                          'minHeight': '400px', 'height': '400px', 'maxHeight': '400px',
                                          'minWidth': '600px', 'width': '600px', 'maxWidth': '600px',
-                                         'marginLeft': 'auto', 'marginRight': '200px',
+                                         'marginLeft': 'auto', 'marginRight': '100px',
                                          'marginTop': 0, 'marginBottom': "30px"}
                                      )
 
-#plots :
+#PLOTS:
 
 #MAP -----------------------------------------
 data_loc = df_locations 
@@ -122,6 +123,7 @@ warming_stripes = px.bar(data_frame=temp_monthly
               ,x='month_of_year'
               ,y='avg_temp_c'
               ,height=800
+              ,width=1000
               ,hover_name='avg_temp_c'
              ,color='avg_temp_c'
                 ,color_continuous_scale='YlOrRd'
@@ -130,6 +132,8 @@ warming_stripes = px.bar(data_frame=temp_monthly
              ,text_auto=False
              ,range_y = (-3,22)
              ) 
+warming_stripes.update_layout(**custom_template)
+warming_stripes.update_yaxes(title_text="Average Temperature (°C)")
 fig_bar_month =  dcc.Graph(figure=warming_stripes)
 
 
@@ -148,14 +152,16 @@ bar_temp = px.bar(temp_season,
                       barmode='group',
                      color_discrete_map=season_colors,
                      height=400,
+                     width=900,
                  title='Temperature distribution')
 
 bar_temp.update_layout(**custom_template)
 bar_temp.update_layout(showlegend=False)
+bar_temp.update_yaxes(title_text="Average Temperature (°C)")
 fig_bar_season = dcc.Graph(figure=bar_temp)  
 
 
-#TEMPERATURE BOXPLOT --------------------------
+#TEMPERATURE BOXPLOT MONTHLY ------------------------
 temp_cities = pd.read_csv('./data/mart_temp_monthly.csv')
 temp_cities.sort_values(by='city', inplace=True)
 box_temp = px.box(temp_cities,
@@ -168,6 +174,8 @@ box_temp = px.box(temp_cities,
                  title='Temperature distribution')
 box_temp.update_layout(**custom_template)
 box_temp.update_traces(line=dict(color='black', width=0.5))
+box_temp.update_yaxes(title_text="Average Temperature (°C)")
+box_temp.update_xaxes(title_text="City")
 # Add annotations for max and min temperatures
 for city in temp_monthly['city'].unique():
     max_temp = temp_monthly[temp_monthly['city'] == city]['max_temp_c'].max()
@@ -175,11 +183,89 @@ for city in temp_monthly['city'].unique():
     box_temp.add_annotation(x=city, y=max_temp, text=f"Max: {max_temp}°C", showarrow=True, font=dict(color='black'))
     box_temp.add_annotation(x=city, y=min_temp, text=f"Min: {min_temp}°C", showarrow=True, font=dict(color='black'))
 box_temp.update_layout(showlegend=False)
-fig_box = dcc.Graph(figure=box_temp)
+fig_temp_box = dcc.Graph(figure=box_temp)
 
 
 
+#BARPLOT TEMPERATURE YEAR ------------------------------------------------------
+temp_year = pd.read_csv('./data/prep_forecast_day.csv', parse_dates=['date'])
+bar_temp_y = px.bar(temp_year,
+                     y="avg_temp_c",
+                     x='date',
+                     color='season_name',
+                      barmode='group',
+                     color_discrete_map=season_colors,
+                     height=400,
+                     width=900,
+                 title='Temperature distribution')
 
+bar_temp_y.update_layout(**custom_template)
+bar_temp_y.update_layout(showlegend=True)
+fig_temp_y = dcc.Graph(figure=bar_temp_y) 
+
+
+
+#SUBLOT WEATHER CONDITIONS PER SEASON, INDEX CITIES ----------------------------
+condition_text = pd.read_csv('./data/mart_condition_text_season.csv')
+custom_dict = {'Winter':1, 'Spring':2, 'Summer':3, 'Autumn':4}
+condition_text= condition_text.sort_values(by='season_name', key=lambda x: x.map(custom_dict))
+
+sub = make_subplots(rows=2, cols=2)
+sub.add_trace(go.Bar(               # Add bar trace to the subplot
+    y=condition_text['season_name'],
+    x=condition_text['sunny_days'],
+    hovertext=condition_text['city'],
+    #text=condition_text['season_name'],
+    orientation='h',
+    marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+), row=1, col=1)
+
+sub.add_trace(go.Bar(
+    y=condition_text['season_name'],
+    x=condition_text['cloudy_days'],
+    hovertext=condition_text['city'],
+    #text=condition_text['season_name'],
+    orientation='h',
+    marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+), row=1, col=2)
+
+sub.add_trace(go.Bar(
+    y=condition_text['season_name'],
+    x=condition_text['rainy_days'],
+    hovertext=condition_text['city'],
+    #text=condition_text['season_name'],
+    orientation='h',
+    marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+), row=2, col=1)
+
+sub.add_trace(go.Bar(
+    y=condition_text['season_name'],
+    x=condition_text['snowy_days'],
+    hovertext=condition_text['city'],
+    #text=condition_text['season_name'],
+    orientation='h',
+    marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+), row=2, col=2)
+
+sub.update_layout(
+    width=1000,
+    height=800,
+    hovermode='closest',
+    title={
+        "text": f"Weather condition in {city} ",
+        "x": 0.5,  # Center the title
+    },)
+
+sub.update_xaxes(title_text="Sunny Days", row=1, col=1)     # Update x and y axes
+sub.update_xaxes(title_text="Cloudy Days", row=1, col=2)
+sub.update_xaxes(title_text="Rainy Days", row=2, col=1)
+sub.update_xaxes(title_text="Snowy Days", row=2, col=2)
+sub.update_layout(showlegend=False)
+sub.update_layout(showlegend=False)
+sub.update_layout(**custom_template)
+sub_conditions = dcc.Graph(figure=sub) 
+
+dropdown_city = dcc.Dropdown(options=['Berlin', 'Biarritz', 'Auckland','Reykjavik','Vancouver'], value="Berlin", clearable=False) 
 
 # Create your Dash application instance
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -191,22 +277,107 @@ app.css.append_css({"external_url": custom_css})
 
 # Define your layout
 app.layout = html.Div([
-    html.H2([html.Span('WHERE WOULD BE AN IDEAL PLACE TO LIVE?')],
+    dbc.Row([
+        html.H2([html.Span('WHERE WOULD BE AN IDEAL PLACE TO LIVE?')],
             style={'margin': '20px', 'width': '300px'}),
-    html.Div('TIMEFRAME : 12.04.2023 — 11.04.2024',
+        html.Div('TIMEFRAME : 12.04.2023 — 11.04.2024',
              style={'margin': '20px', 'width': '300px'}),  # Set margin directly using the 'style' attribute
+        html.Div([
+            dcc.Markdown('''
+            AUCKLAND — NEW ZEALAND  
+            BERLIN — GERMANY  
+            BIARRITZ — FRANCE  
+            REYKJAVIK — ICELAND  
+            VANCOUVER — CANADA  
+            ''', dangerously_allow_html=True, style={'margin': '20px', 'width': '300px'})
+        ])
+    ], style={'margin': '20px'}),
+    html.Div(table, style={'margin-right': '20px'}),
+    map_locations,
     html.Div([
-        dcc.Markdown('''
-        AUCKLAND — NEW ZEALAND  
-        BERLIN — GERMANY  
-        BIARRITZ — FRANCE  
-        REYKJAVIK — ICELAND  
-        VANCOUVER — CANADA  
-        ''', dangerously_allow_html=True, style={'margin': '20px', 'width': '300px'})
-    ]), table
-    ,map_locations,
-    fig_box
+        html.Div([
+            dcc.Markdown('''
+            TEMPERATURES  
+            ''', dangerously_allow_html=True, style={'margin': '20px', 'width': '300px'})
+        ]),
+        dbc.Row([
+            html.Div(fig_temp_box),
+            html.Div(fig_bar_month),
+        ]),
+        dbc.Row([
+            html.Div(fig_bar_season),
+            html.Div(fig_temp_y),
+        ]),
+        dropdown_city,
+        html.Div(sub_conditions),
+    ]),
 ])
+
+
+@callback(                            # or app@callback()    #you can make one callback influencing many figures too if you want.
+    Output(sub_conditions, "figure"), 
+    Input(dropdown_city, "value"))  
+
+def update_subplot(city): 
+    mask = condition_text["city"] == city # coming from the function parameter
+    one_city = condition_text[mask]
+    sub = make_subplots(rows=2, cols=2)
+    sub.add_trace(go.Bar(              # Add bar trace to the subplot
+        data=condition_text,
+        y=condition_text['season_name'],
+        x=condition_text['sunny_days'],
+        hovertext=condition_text['city'],
+        #text=condition_text['season_name'],
+        orientation='h',
+        marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+    ), row=1, col=1)
+
+    sub.add_trace(go.Bar(
+        y=condition_text['season_name'],
+        x=condition_text['cloudy_days'],
+        hovertext=condition_text['city'],
+        #text=condition_text['season_name'],
+        orientation='h',
+            marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+    ), row=1, col=2)
+
+    sub.add_trace(go.Bar(
+        y=condition_text['season_name'],
+        x=condition_text['rainy_days'],
+        #hovertext=condition_text['city'],
+        #text=condition_text['season_name'],
+        orientation='h',
+        marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+    ), row=2, col=1)
+
+    sub.add_trace(go.Bar(
+        y=condition_text['season_name'],
+        x=condition_text['snowy_days'],
+        hovertext=condition_text['city'],
+        text=condition_text['season_name'],
+        orientation='h',
+        marker_color=[custom_colors[city] for city in condition_text['city']],  # Coloring by city
+    ), row=2, col=2)
+
+    sub.update_layout(
+        width=1000,
+        height=800,
+        hovermode='closest',
+        title={
+           "text": f"Weather condition in {city} ",
+            "x": 0.5,  # Center the title
+        },)
+
+    sub.update_xaxes(title_text="Sunny Days", row=1, col=1)     # Update x and y axes
+    sub.update_xaxes(title_text="Cloudy Days", row=1, col=2)
+    sub.update_xaxes(title_text="Rainy Days", row=2, col=1)
+    sub.update_xaxes(title_text="Snowy Days", row=2, col=2)
+    sub.update_layout(showlegend=False)
+    sub.update_layout(showlegend=False)
+    sub.update_layout(**custom_template)
+
+    return sub # whatever you are returning here is connected to the component property of
+                       #the output which is figure
 
 # Run the app
 if __name__ == '__main__':
