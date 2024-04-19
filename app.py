@@ -184,6 +184,8 @@ fig_box = dcc.Graph(figure=box_temp)
 # Create your Dash application instance
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+server = app.server
+
 # Apply your custom CSS styles
 app.css.append_css({"external_url": custom_css})
 
