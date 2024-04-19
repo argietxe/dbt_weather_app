@@ -81,7 +81,7 @@ table = dash_table.DataTable(df_locations.to_dict('records'),
                                      style_table={ 
                                          'minHeight': '400px', 'height': '400px', 'maxHeight': '400px',
                                          'minWidth': '600px', 'width': '600px', 'maxWidth': '600px',
-                                         'marginLeft': 'auto', 'marginRight': '100px',
+                                         'marginLeft': '20px', 'marginRight': 'auto',
                                          'marginTop': 0, 'marginBottom': "30px"}
                                      )
 
@@ -106,8 +106,6 @@ map_s = px.scatter_mapbox(data_loc,
                        height=700,
                        width=1000)
 map_locations = dcc.Graph(figure=map_s)
-
-
 
 
 #TEMPERATURE BAR PLOT MONTH--------------------
@@ -153,7 +151,7 @@ bar_temp = px.bar(temp_season,
                      color_discrete_map=season_colors,
                      height=400,
                      width=900,
-                 title='Temperature distribution')
+                 title='Temperature Distribution per Season')
 
 bar_temp.update_layout(**custom_template)
 bar_temp.update_layout(showlegend=False)
@@ -171,7 +169,7 @@ box_temp = px.box(temp_cities,
                      color_discrete_map=grey_colors,
                      height=800,
                      width=900,
-                 title='Temperature distribution')
+                 title='Temperature Distribution in a Year')
 box_temp.update_layout(**custom_template)
 box_temp.update_traces(line=dict(color='black', width=0.5))
 box_temp.update_yaxes(title_text="Average Temperature (°C)")
@@ -197,7 +195,7 @@ bar_temp_y = px.bar(temp_year,
                      color_discrete_map=season_colors,
                      height=400,
                      width=900,
-                 title='Temperature distribution')
+                 title='Temperature Distribution in a Year')
 
 bar_temp_y.update_layout(**custom_template)
 bar_temp_y.update_layout(showlegend=True)
@@ -265,6 +263,24 @@ sub.update_layout(showlegend=False)
 sub.update_layout(**custom_template)
 sub_conditions = dcc.Graph(figure=sub) 
 
+# LINEPLOT FOR SUNLIGHT -------------------------
+sunlight_year = pd.read_csv('./data/sunlight_over_year.csv', parse_dates=['date','sunlight'])
+sunlight = px.line(data_frame=sunlight_year
+              ,x='date'
+              ,y='sunlight'
+              ,color='city'
+              ,color_discrete_map=custom_colors
+              ,height=800
+              ,hover_name='date'
+              ,markers=False
+              ,title='from April 2023 to April 2024'
+             ) 
+
+sunlight.update_traces(line=dict(width=5)) #to change the thickness of the line
+sunlight.update_layout(**custom_template)
+line_sun = dcc.Graph(figure=sunlight) 
+
+#DROPDOWN ------------------------------------------
 dropdown_city = dcc.Dropdown(options=['Berlin', 'Biarritz', 'Auckland','Reykjavik','Vancouver'], value="Berlin", clearable=False) 
 
 # Create your Dash application instance
@@ -279,27 +295,24 @@ app.css.append_css({"external_url": custom_css})
 app.layout = html.Div([
     dbc.Row([
         html.H2([html.Span('WHERE WOULD BE AN IDEAL PLACE TO LIVE?')],
-            style={'margin': '20px', 'width': '300px'}),
+            style={'margin': '40px', 'width': '300px'}),
         html.Div('TIMEFRAME : 12.04.2023 — 11.04.2024',
-             style={'margin': '20px', 'width': '300px'}),  # Set margin directly using the 'style' attribute
+             style={'margin': '40px', 'width': '1000px'}),  # Set margin directly using the 'style' attribute
         html.Div([
-            dcc.Markdown('''
+        dcc.Markdown('''        
             AUCKLAND — NEW ZEALAND  
             BERLIN — GERMANY  
             BIARRITZ — FRANCE  
             REYKJAVIK — ICELAND  
             VANCOUVER — CANADA  
             ''', dangerously_allow_html=True, style={'margin': '20px', 'width': '300px'})
-        ])
-    ], style={'margin': '20px'}),
-    html.Div(table, style={'margin-right': '20px'}),
+    ], style={'margin': '20px', 'width':'40%', 'display':'inline-block'}),
+        html.Div(table, style={'margin-right': '20px', 'width':'40%', 'display':'inline-block'}),
+    ], style={'display': 'flex'}),
     map_locations,
     html.Div([
-        html.Div([
-            dcc.Markdown('''
-            TEMPERATURES  
-            ''', dangerously_allow_html=True, style={'margin': '20px', 'width': '300px'})
-        ]),
+        html.H2([html.Span('TEMPERATURES')],
+            style={'margin': '40px', 'width': '300px'}),
         dbc.Row([
             html.Div(fig_temp_box),
             html.Div(fig_bar_month),
@@ -311,8 +324,16 @@ app.layout = html.Div([
         dropdown_city,
         html.Div(sub_conditions),
     ]),
+    html.Div([
+        html.H2([html.Span('SUNLIGHT')],
+            style={'margin': '40px', 'width': '300px'}),
+        dbc.Row([
+            html.Div(line_sun),
+        ]),
+    ]),
 ])
 
+line_sun
 
 @callback(                            # or app@callback()    #you can make one callback influencing many figures too if you want.
     Output(sub_conditions, "figure"), 
