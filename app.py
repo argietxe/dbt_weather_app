@@ -187,19 +187,24 @@ fig_temp_box = dcc.Graph(figure=box_temp)
 
 #BARPLOT TEMPERATURE YEAR ------------------------------------------------------
 temp_year = pd.read_csv('./data/prep_forecast_day.csv', parse_dates=['date'])
-bar_temp_y = px.bar(temp_year,
+bar_temp_y = px.line(temp_year,
                      y="avg_temp_c",
                      x='date',
                      color='city',
-                      barmode='group',
+                      #barmode='group',
                      color_discrete_map=custom_colors,
-                     height=800,
-                     width=1400,
-                 title='Temperature Distribution in a Year')
+                     height=600,
+                 title='Temperature distribution')
 
+bar_temp_y.update_traces(marker_line_width = 0,
+                  selector=dict(type="bar"))
+
+bar_temp_y.update_layout(bargap=0,
+                  bargroupgap = 0,
+                 )
 bar_temp_y.update_layout(**custom_template)
 bar_temp_y.update_layout(showlegend=True)
-fig_temp_y = dcc.Graph(figure=bar_temp_y) 
+fig_temp_y = dcc.Graph(figure=bar_temp_y)
 
 
 
@@ -311,7 +316,7 @@ app.layout = html.Div([
     ], style={'display': 'flex'}),
     map_locations,
     html.Div([
-        html.H2([html.Span('TEMPERATURES')],
+        html.H3([html.Span('TEMPERATURES')],
             style={'margin': '40px', 'width': '300px'}),
         dbc.Row([
             html.Div(fig_temp_box, style={'width':'70%', 'display':'inline-block'}),
@@ -319,15 +324,15 @@ app.layout = html.Div([
         ]),
         dbc.Row([
             html.Div(fig_bar_season),
-            html.Div(fig_temp_y),
+            html.Div(fig_temp_y, style={'width':'100%'}),
         ]),
-        html.H2([html.Span('WHEATHER CONDITIONS')],
+        html.H3([html.Span('WHEATHER CONDITIONS')],
             style={'margin': '40px', 'width': '300px'}),
         dropdown_city,
         html.Div(sub_conditions),
     ]),
     html.Div([
-        html.H2([html.Span('SUNLIGHT')],
+        html.H3([html.Span('SUNLIGHT')],
             style={'margin': '40px', 'width': '300px'}),
         dbc.Row([
             html.Div(line_sun),
@@ -335,7 +340,6 @@ app.layout = html.Div([
     ]),
 ])
 
-line_sun
 
 @callback(                            # or app@callback()    #you can make one callback influencing many figures too if you want.
     Output(sub_conditions, "figure"), 
