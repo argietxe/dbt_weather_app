@@ -1,0 +1,12 @@
+dash==2.16.1
+gunicorn==22.0.0
+plotly==5.20.0
+dash-tools==1.12.0
+pandas==2.2.1
+dash_bootstrap_components==1.6.0
+#sqlalchemy
+#python-dotenv
+#psycopg2
+
+
+# pip show 'dash' to see the version
