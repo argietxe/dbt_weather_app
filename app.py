@@ -120,11 +120,11 @@ temp_monthly= temp_monthly.sort_values(by='month_of_year', key=lambda x: x.repla
 warming_stripes = px.bar(data_frame=temp_monthly
               ,x='month_of_year'
               ,y='avg_temp_c'
-              ,height=800
-              ,width=1000
+              ,height=400
+              ,width=400
               ,hover_name='avg_temp_c'
              ,color='avg_temp_c'
-                ,color_continuous_scale='YlOrRd'
+                ,color_continuous_scale='greys'
                 ,range_color=[0, 25]
              ,animation_frame='city'
              ,text_auto=False
@@ -168,8 +168,8 @@ box_temp = px.box(temp_cities,
                      color='city',
                      color_discrete_map=grey_colors,
                      height=800,
-                     width=900,
-                 title='Temperature Distribution in a Year')
+                     #width=1000,
+                 title='Distribution in a Year')
 box_temp.update_layout(**custom_template)
 box_temp.update_traces(line=dict(color='black', width=0.5))
 box_temp.update_yaxes(title_text="Average Temperature (°C)")
@@ -190,11 +190,11 @@ temp_year = pd.read_csv('./data/prep_forecast_day.csv', parse_dates=['date'])
 bar_temp_y = px.bar(temp_year,
                      y="avg_temp_c",
                      x='date',
-                     color='season_name',
+                     color='city',
                       barmode='group',
-                     color_discrete_map=season_colors,
-                     height=400,
-                     width=900,
+                     color_discrete_map=custom_colors,
+                     height=800,
+                     width=1400,
                  title='Temperature Distribution in a Year')
 
 bar_temp_y.update_layout(**custom_template)
@@ -246,11 +246,11 @@ sub.add_trace(go.Bar(
 ), row=2, col=2)
 
 sub.update_layout(
-    width=1000,
+    width=1400,
     height=800,
     hovermode='closest',
     title={
-        "text": f"Weather condition in {city} ",
+        "text": "  ",
         "x": 0.5,  # Center the title
     },)
 
@@ -314,13 +314,15 @@ app.layout = html.Div([
         html.H2([html.Span('TEMPERATURES')],
             style={'margin': '40px', 'width': '300px'}),
         dbc.Row([
-            html.Div(fig_temp_box),
-            html.Div(fig_bar_month),
+            html.Div(fig_temp_box, style={'width':'70%', 'display':'inline-block'}),
+            html.Div(fig_bar_month, style={'width':'60%', 'display':'inline-block', 'marginLeft': "900px"}),
         ]),
         dbc.Row([
             html.Div(fig_bar_season),
             html.Div(fig_temp_y),
         ]),
+        html.H2([html.Span('WHEATHER CONDITIONS')],
+            style={'margin': '40px', 'width': '300px'}),
         dropdown_city,
         html.Div(sub_conditions),
     ]),
