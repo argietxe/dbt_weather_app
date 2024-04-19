@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output, State
 import plotly.express as px
 from dash import dash_table
 import dash_bootstrap_components as dbc
+from plotly.subplots import make_subplots
 
 # Define your custom CSS styles
 custom_css = '''
@@ -56,6 +57,15 @@ grey_colors = {
     'Reykjavik': '#A9A9A9',
     'Vancouver': '#A9A9A9'
     }
+
+#for season color
+season_colors = {
+    'Winter': '#C7E2E7', #C3BA27
+    'Spring': '#8A73A1', #929292
+    'Summer': '#C3921E', #FDA929
+    'Autumn': '#8D2013', #A9C7FC
+}
+
 
 #table 
 df_locations = pd.read_csv('./data/staging_location.csv')
@@ -173,9 +183,6 @@ fig_box = dcc.Graph(figure=box_temp)
 
 # Create your Dash application instance
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-#DO NOT OFRGET TO ADD SERVER=APP.SERVER
-server= app.server
 
 # Apply your custom CSS styles
 app.css.append_css({"external_url": custom_css})
